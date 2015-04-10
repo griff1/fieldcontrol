@@ -40,7 +40,7 @@ boolean dir = true;
 
 void setup() {
   // initialize the LED pin as an output:
-  pinMode(ledPin, OUTPUT);      
+  pinMode(ledPin, OUTPUT);
   
   // Initialize I2C
   Wire.begin();
@@ -49,10 +49,20 @@ void setup() {
   Wire.write(setToutB,2);
   Wire.endTransmission();
   
+  Wire.beginTransmission(addrB2);
+  Wire.write(0x80);
+  Wire.write(setToutB,2);
+  Wire.endTransmission();
+  
+  Wire.beginTransmission(addrB3);
+  Wire.write(0x80);
+  Wire.write(setToutB,2);
+  Wire.endTransmission();
+  
   time = millis();
-  gate1timer=time;
-  gate2timer=time;
-  spinnertimer=time;
+  gate1timer=0;
+  gate2timer=0;
+  spinnertimer=0;
 
   // Initialize buttons
   pinMode(light, INPUT);
@@ -86,19 +96,20 @@ void loop() {
   time = millis();
   // Gate 1
   if (digitalRead(buttonPin1) == LOW || digitalRead(buttonPin2) == LOW) {
+      digitalWrite(ledPin, LOW);
       if (gate1timer < time) {
         gate1timer = time+10000;
       }
   }
   // Going up
-  if (time < gate1timer-8000) {
+  if ((time < gate1timer-8000) && (gate1timer > 0)) {
     Wire.beginTransmission(addrB2);
     Wire.write(0x1);
     Wire.write(startB,8);
     Wire.endTransmission();
   }
   // Going down
-  else if (time > gate1timer-2000 && time < gate1timer) {
+  else if ((time > gate1timer-2000) && (time < gate1timer)) {
     Wire.beginTransmission(addrB2);
     Wire.write(0x1);
     Wire.write(reverseB,8);
@@ -111,22 +122,23 @@ void loop() {
     Wire.write(stopB,8);
     Wire.endTransmission();
   }
-  
+
   // Gate 2
-  if(digitalRead(buttonPin3) == LOW || digitalRead(buttonPin4) == LOW) {
+  if (digitalRead(buttonPin3) == LOW || digitalRead(buttonPin4) == LOW) {
+      digitalWrite(ledPin, LOW);
       if (gate2timer < time) {
         gate2timer = time+10000;
       }
   }
   // Going up
-  if (time < gate2timer-8000) {
+  if ((time < gate2timer-8000) && (gate2timer > 0)) {
     Wire.beginTransmission(addrB3);
     Wire.write(0x1);
     Wire.write(startB,8);
     Wire.endTransmission();
   }
   // Going down
-  else if (time > gate2timer-2000 && time < gate2timer) {
+  else if ((time > gate2timer-2000) && (time < gate2timer)) {
     Wire.beginTransmission(addrB3);
     Wire.write(0x1);
     Wire.write(reverseB,8);
@@ -139,11 +151,12 @@ void loop() {
     Wire.write(stopB,8);
     Wire.endTransmission();
   }
-  
+
   // Spinner
-  if(digitalRead(buttonPin5) == LOW || digitalRead(buttonPin6)) {
-    if (spinnertimer < time+10000) {
+  if(digitalRead(buttonPin5) == LOW || digitalRead(buttonPin6) == LOW) {
+    if (spinnertimer < time) {
       dir = !dir;
+      spinnertimer = time+10000;
     }
   }
   if(dir) {
