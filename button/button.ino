@@ -27,11 +27,11 @@ byte addrB3 = 0x0F;    // third grizzly address - Gate2
 byte currLimitSpinner[3] = {0b00010011, 54, 0};
 byte startB[8] = {0b00010011,0x0,0x0,0x0,0x0,100,0x0,0x0};
 byte startBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,30,0x0,0x0};
-byte startBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,60,0x0,0x0};
+byte startBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,75,0x0,0x0};
 byte stopB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
 byte reverseB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x9C,0xFF,0x0};
 byte reverseBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,0xE2,0xFF,0x0};
-byte reverseBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,0xA0,0xFF,0x0};
+byte reverseBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,0x8B,0xFF,0x0};
 byte noaccel[2] = {0b00010011, 20};
 byte setToutB[2] = {0x0, 0x08};
 
@@ -163,7 +163,7 @@ void loop() {
     Wire.endTransmission();
   }
   // Going down
-  else if ((time > gate1timer-1000) && (time < gate1timer)) {
+  else if ((time > gate1timer-1500) && (time < gate1timer)) {
     Wire.beginTransmission(addrB2);
     Wire.write(0x1);
     Wire.write(reverseBMedium,8);
@@ -192,7 +192,7 @@ void loop() {
     Wire.endTransmission();
   }
   // Going down
-  else if ((time > gate2timer-1000) && (time < gate2timer)) {
+  else if ((time > gate2timer-1500) && (time < gate2timer)) {
     Wire.beginTransmission(addrB3);
     Wire.write(0x1);
     Wire.write(reverseBMedium,8);
