@@ -4,12 +4,11 @@
 const int light = A1;    // testing
 
 const int buttonPin1 = 0;    // button 1
-const int buttonPin2 = 1;    // button 2
-// Gate 1 Down
+const int buttonPin2 = A2;    // button 2
+
 const int buttonPin3 = 2;    // button 3
 const int buttonPin4 = 3;    // button 4
 
-// Gate 2 Up
 const int buttonPin5 = 4;    // button 5
 const int buttonPin6 = 5;    // button 6
 
@@ -19,13 +18,16 @@ byte addrB2 = 0x0E;    // second grizzly address - Gate1
 byte addrB3 = 0x0F;    // third grizzly address - Gate2
 
 
+byte currLimitSpinner[3] = {0b00010011, 54, 0};
 byte startB[8] = {0b00010011,0x0,0x0,0x0,0x0,100,0x0,0x0};
+byte startBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,30,0x0,0x0};
 byte stopB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
 byte reverseB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x9C,0xFF,0x0};
+byte reverseBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,0xE2,0xFF,0x0};
 byte noaccel[2] = {0b00010011, 20};
 byte setToutB[2] = {0x0, 0x08};
 
-const int ledPin =  13;      // the number of the LED pin
+const int ledPin = 13;      // the number of the LED pin
 int buttonState = 0;         // variable for reading the pushbutton status
 #define ON LOW
 #define OFF HIGH
@@ -45,15 +47,27 @@ void setup() {
   // Initialize I2C
   Wire.begin();
   Wire.beginTransmission(addrB1);
+  Wire.write(0x90);
+  Wire.write(noaccel,2);
+  Wire.endTransmission();
+  Wire.beginTransmission(addrB1);
   Wire.write(0x80);
   Wire.write(setToutB,2);
   Wire.endTransmission();
   
   Wire.beginTransmission(addrB2);
+  Wire.write(0x90);
+  Wire.write(noaccel,2);
+  Wire.endTransmission();
+  Wire.beginTransmission(addrB2);
   Wire.write(0x80);
   Wire.write(setToutB,2);
   Wire.endTransmission();
   
+  Wire.beginTransmission(addrB3);
+  Wire.write(0x90);
+  Wire.write(noaccel,2);
+  Wire.endTransmission();
   Wire.beginTransmission(addrB3);
   Wire.write(0x80);
   Wire.write(setToutB,2);
@@ -81,16 +95,30 @@ void setup() {
   pinMode(buttonPin5, INPUT);
   digitalWrite(buttonPin5, HIGH); 
   pinMode(buttonPin6, INPUT);
-  digitalWrite(buttonPin6, HIGH);  
+  digitalWrite(buttonPin6, HIGH);
+  Serial.begin(9600);  
 }
 
 void loop() {
+  Serial.print(digitalRead(buttonPin1));
+  Serial.print(" ");
+  Serial.print(digitalRead(buttonPin2));
+  Serial.print(" ");
+  Serial.print(digitalRead(buttonPin3));
+  Serial.print(" ");
+  Serial.print(digitalRead(buttonPin4));
+  Serial.print(" ");
+  Serial.print(digitalRead(buttonPin5));
+  Serial.print(" ");
+  Serial.print(digitalRead(buttonPin6));
+  Serial.print(" ");
   // Test stuff
   if (digitalRead(light) == LOW) {
     digitalWrite(ledPin, LOW);
   }
   else {
     digitalWrite(ledPin, HIGH);
+    Serial.write("this light should be on");
   }
     
   time = millis();
@@ -156,19 +184,25 @@ void loop() {
   if(digitalRead(buttonPin5) == LOW || digitalRead(buttonPin6) == LOW) {
     if (spinnertimer < time) {
       dir = !dir;
-      spinnertimer = time+10000;
+      spinnertimer = time+11000;
     }
   }
-  if(dir) {
+  if ((time > spinnertimer-11000) && (time < spinnertimer-10000)) {
     Wire.beginTransmission(addrB1);
     Wire.write(0x1);
-    Wire.write(startB,8);
+    Wire.write(stopB,8);
+    Wire.endTransmission();
+  }
+  else if(dir) {
+    Wire.beginTransmission(addrB1);
+    Wire.write(0x1);
+    Wire.write(startBSlow,8);
     Wire.endTransmission();
   }
   else {
     Wire.beginTransmission(addrB1);
     Wire.write(0x1);
-    Wire.write(reverseB,8);
+    Wire.write(reverseBSlow,8);
     Wire.endTransmission();
   }
 }
