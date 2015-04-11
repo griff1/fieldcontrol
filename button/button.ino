@@ -1,10 +1,10 @@
 #include "Wire.h"
 
 // Gate 1 Up
-const int light = A1;    // testing
+const int light = 13;    // testing
 
-const int buttonPin1 = 0;    // button 1
-const int buttonPin2 = A2;    // button 2
+const int buttonPin1 = A2;    // button 1
+const int buttonPin2 = A1;    // button 2
 
 const int buttonPin3 = 2;    // button 3
 const int buttonPin4 = 3;    // button 4
@@ -33,14 +33,16 @@ int buttonState = 0;         // variable for reading the pushbutton status
 #define OFF HIGH
 
 unsigned long time;
-int gate1timer;    // Lower after 8 seconds
-int gate2timer;
-int spinnertimer;
+unsigned long gate1timer;    // Lower after 8 seconds
+unsigned long gate2timer;
+unsigned long spinnertimer;
 
 boolean dir = true;
 
 
 void setup() {
+  Serial.begin(9600);
+  Serial.println("Started");
   // initialize the LED pin as an output:
   pinMode(ledPin, OUTPUT);
   
@@ -79,9 +81,9 @@ void setup() {
   spinnertimer=0;
 
   // Initialize buttons
-  pinMode(light, INPUT);
+  //pinMode(light, INPUT);
   
-  digitalWrite(light, HIGH);
+  //digitalWrite(light, HIGH);
   pinMode(buttonPin1, INPUT);
   digitalWrite(buttonPin1, HIGH); 
   pinMode(buttonPin2, INPUT);
@@ -96,7 +98,8 @@ void setup() {
   digitalWrite(buttonPin5, HIGH); 
   pinMode(buttonPin6, INPUT);
   digitalWrite(buttonPin6, HIGH);
-  Serial.begin(9600);  
+  
+  Serial.println("Started 2");
 }
 
 void loop() {
@@ -111,14 +114,14 @@ void loop() {
   Serial.print(digitalRead(buttonPin5));
   Serial.print(" ");
   Serial.print(digitalRead(buttonPin6));
-  Serial.print(" ");
+  Serial.println(" ");
   // Test stuff
   if (digitalRead(light) == LOW) {
     digitalWrite(ledPin, LOW);
   }
   else {
     digitalWrite(ledPin, HIGH);
-    Serial.write("this light should be on");
+    //Serial.write("this light should be on");
   }
     
   time = millis();
@@ -184,22 +187,18 @@ void loop() {
   if(digitalRead(buttonPin5) == LOW || digitalRead(buttonPin6) == LOW) {
     if (spinnertimer < time) {
       dir = !dir;
-      spinnertimer = time+11000;
+      spinnertimer = time+5000;
     }
   }
-  if ((time > spinnertimer-11000) && (time < spinnertimer-10000)) {
-    Wire.beginTransmission(addrB1);
-    Wire.write(0x1);
-    Wire.write(stopB,8);
-    Wire.endTransmission();
-  }
-  else if(dir) {
+  if(dir) {
+    Serial.println("Forward");
     Wire.beginTransmission(addrB1);
     Wire.write(0x1);
     Wire.write(startBSlow,8);
     Wire.endTransmission();
   }
   else {
+    Serial.println("Backward");
     Wire.beginTransmission(addrB1);
     Wire.write(0x1);
     Wire.write(reverseBSlow,8);
