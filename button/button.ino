@@ -3,14 +3,20 @@
 // Gate 1 Up
 const int light = 13;    // testing
 
-const int buttonPin1 = A2;    // button 1
-const int buttonPin2 = A1;    // button 2
+const int turntable1 = A3;
+const int turntable2 = A2;
 
-const int buttonPin3 = 2;    // button 3
-const int buttonPin4 = 3;    // button 4
+const int eastgatelimit = A0;    // button 1
+const int westgatelimit = A1;    // button 2
 
-const int buttonPin5 = 4;    // button 5
-const int buttonPin6 = 5;    // button 6
+const int eastgate1 = 2;    // button 3
+const int eastgate2 = 3;    // button 4
+
+const int westgate1 = 0;    // button 5
+const int westgate2 = 1;    // button 6
+
+const int emstop = 4;    // Really necessary?  Just user power.
+const int maxcom = 5;
 
 //Bytes and Shit
 byte addrB1 = 0x0B;    // first grizzly address - Spinner 
@@ -21,9 +27,11 @@ byte addrB3 = 0x0F;    // third grizzly address - Gate2
 byte currLimitSpinner[3] = {0b00010011, 54, 0};
 byte startB[8] = {0b00010011,0x0,0x0,0x0,0x0,100,0x0,0x0};
 byte startBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,30,0x0,0x0};
+byte startBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,60,0x0,0x0};
 byte stopB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
 byte reverseB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x9C,0xFF,0x0};
 byte reverseBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,0xE2,0xFF,0x0};
+byte reverseBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,0xA0,0xFF,0x0};
 byte noaccel[2] = {0b00010011, 20};
 byte setToutB[2] = {0x0, 0x08};
 
@@ -41,8 +49,8 @@ boolean dir = true;
 
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("Started");
+  //Serial.begin(9600);
+  //Serial.println("Started");
   // initialize the LED pin as an output:
   pinMode(ledPin, OUTPUT);
   
@@ -84,26 +92,41 @@ void setup() {
   //pinMode(light, INPUT);
   
   //digitalWrite(light, HIGH);
-  pinMode(buttonPin1, INPUT);
-  digitalWrite(buttonPin1, HIGH); 
-  pinMode(buttonPin2, INPUT);
-  digitalWrite(buttonPin2, HIGH); 
+  pinMode(eastgate1, INPUT);
+  digitalWrite(eastgate1, HIGH); 
+  pinMode(eastgate2, INPUT);
+  digitalWrite(eastgate2, HIGH); 
   
-  pinMode(buttonPin3, INPUT);
-  digitalWrite(buttonPin3, HIGH); 
-  pinMode(buttonPin4, INPUT);
-  digitalWrite(buttonPin4, HIGH); 
+  pinMode(westgate1, INPUT);
+  digitalWrite(westgate1, HIGH); 
+  pinMode(westgate2, INPUT);
+  digitalWrite(westgate2, HIGH); 
 
-  pinMode(buttonPin5, INPUT);
-  digitalWrite(buttonPin5, HIGH); 
-  pinMode(buttonPin6, INPUT);
-  digitalWrite(buttonPin6, HIGH);
+  pinMode(turntable1, INPUT);
+  digitalWrite(turntable1, HIGH); 
+  pinMode(turntable2, INPUT);
+  digitalWrite(turntable2, HIGH);
   
-  Serial.println("Started 2");
+  pinMode(eastgatelimit, INPUT);
+  digitalWrite(eastgatelimit, HIGH); 
+  pinMode(westgatelimit, INPUT);
+  digitalWrite(westgatelimit, HIGH);
+  
+  pinMode(eastgatelimit, INPUT);
+  digitalWrite(eastgatelimit, HIGH); 
+  pinMode(westgatelimit, INPUT);
+  digitalWrite(westgatelimit, HIGH);
+  
+  pinMode(emstop, INPUT);
+  digitalWrite(emstop, HIGH); 
+  pinMode(maxcom, INPUT);
+  digitalWrite(maxcom, HIGH);
+  
+  // Serial.println("Started 2");
 }
 
 void loop() {
-  Serial.print(digitalRead(buttonPin1));
+  /*Serial.print(digitalRead(buttonPin1));
   Serial.print(" ");
   Serial.print(digitalRead(buttonPin2));
   Serial.print(" ");
@@ -114,7 +137,7 @@ void loop() {
   Serial.print(digitalRead(buttonPin5));
   Serial.print(" ");
   Serial.print(digitalRead(buttonPin6));
-  Serial.println(" ");
+  Serial.println(" ");*/
   // Test stuff
   if (digitalRead(light) == LOW) {
     digitalWrite(ledPin, LOW);
@@ -125,25 +148,25 @@ void loop() {
   }
     
   time = millis();
-  // Gate 1
-  if (digitalRead(buttonPin1) == LOW || digitalRead(buttonPin2) == LOW) {
+  // East Gate
+  if (digitalRead(eastgate1) == LOW || digitalRead(eastgate2) == LOW) {
       digitalWrite(ledPin, LOW);
       if (gate1timer < time) {
         gate1timer = time+10000;
       }
   }
   // Going up
-  if ((time < gate1timer-8000) && (gate1timer > 0)) {
+  if ((time < gate1timer-9000) && (gate1timer > 0) && (digitalRead(eastgatelimit) != LOW)) {
     Wire.beginTransmission(addrB2);
     Wire.write(0x1);
-    Wire.write(startB,8);
+    Wire.write(startBMedium,8);
     Wire.endTransmission();
   }
   // Going down
-  else if ((time > gate1timer-2000) && (time < gate1timer)) {
+  else if ((time > gate1timer-1000) && (time < gate1timer)) {
     Wire.beginTransmission(addrB2);
     Wire.write(0x1);
-    Wire.write(reverseB,8);
+    Wire.write(reverseBMedium,8);
     Wire.endTransmission();
   }
   // Stopped
@@ -154,25 +177,25 @@ void loop() {
     Wire.endTransmission();
   }
 
-  // Gate 2
-  if (digitalRead(buttonPin3) == LOW || digitalRead(buttonPin4) == LOW) {
+  // West Gate
+  if (digitalRead(westgate1) == LOW || digitalRead(westgate2) == LOW) {
       digitalWrite(ledPin, LOW);
       if (gate2timer < time) {
         gate2timer = time+10000;
       }
   }
   // Going up
-  if ((time < gate2timer-8000) && (gate2timer > 0)) {
+  if ((time < gate2timer-9000) && (gate2timer > 0) && (digitalRead(westgatelimit) != LOW)) {
     Wire.beginTransmission(addrB3);
     Wire.write(0x1);
-    Wire.write(startB,8);
+    Wire.write(startBMedium,8);
     Wire.endTransmission();
   }
   // Going down
-  else if ((time > gate2timer-2000) && (time < gate2timer)) {
+  else if ((time > gate2timer-1000) && (time < gate2timer)) {
     Wire.beginTransmission(addrB3);
     Wire.write(0x1);
-    Wire.write(reverseB,8);
+    Wire.write(reverseBMedium,8);
     Wire.endTransmission();
   }
   // Stopped
@@ -184,104 +207,30 @@ void loop() {
   }
 
   // Spinner
-  if(digitalRead(buttonPin5) == LOW || digitalRead(buttonPin6) == LOW) {
+  if(digitalRead(turntable1) == LOW || digitalRead(turntable2) == LOW) {
     if (spinnertimer < time) {
       dir = !dir;
       spinnertimer = time+5000;
     }
   }
-  if(dir) {
-    Serial.println("Forward");
+  if (digitalRead(maxcom) == LOW) {
+    Wire.beginTransmission(addrB1);
+    Wire.write(0x1);
+    Wire.write(stopB,8);
+    Wire.endTransmission();
+  }
+  else if(dir) {
+    //Serial.println("Forward");
     Wire.beginTransmission(addrB1);
     Wire.write(0x1);
     Wire.write(startBSlow,8);
     Wire.endTransmission();
   }
   else {
-    Serial.println("Backward");
+    //Serial.println("Backward");
     Wire.beginTransmission(addrB1);
     Wire.write(0x1);
     Wire.write(reverseBSlow,8);
     Wire.endTransmission();
   }
 }
-      // No acceleration
-      /*Wire.beginTransmission(addrB2);
-      Wire.write(0x90);
-      Wire.write(noaccel,2);
-      Wire.endTransmission();*/
-
-  /*}else if(time >= gate1timer){
-      Wire.beginTransmission(addrB2);
-      Wire.write(0x1);
-      Wire.write(reverseB,8);
-      Wire.endTransmission();
-  }
-  else{
-      Wire.beginTransmission(addrB2);
-      Wire.write(0x1);
-      Wire.write(stopB,8);
-      Wire.endTransmission();
-  }*/
-  // Lower the 1st gate
-  //else if(!gate1up() && gate1down()){
-  
-  //}
-  // Stop the 1st gate
-  
-  
-  // Raise the 2nd gate
-  /*if (gate1up() && !gate1down()){
-  
-  }
-  // Lower the 2nd gate
-  else if(!gate1up() && gate1down()){
-  
-  }
-  // Stop the 2nd gate
-  else{
-  
-  }*/
-  
-  
-  /*
-  // read the state of the pushbutton value:
-  buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH) {    
-    // turn LED on:    
-    digitalWrite(ledPin, LOW);  
-  }
-  else {
-    // turn LED off:
-    digitalWrite(ledPin, HIGH);
-  }
-}*/
-
-/*boolean gate1up(){
-  int up1 = digitalRead(buttonPin1);
-  int up2 = digitalRead(buttonPin2);
-  if (up1) //|| up2)
-    return true;
-  return false;
-}
-boolean gate1down(){
-  int down1 = digitalRead(buttonPin3);
-  int down2 = digitalRead(buttonPin4);
-  if (down1 || down2)
-    return true;
-  return false;
-}
-boolean gate2up(){
-  int up1 = digitalRead(buttonPin5);
-  int up2 = digitalRead(buttonPin6);
-  if (up1 || up2)
-    return true;
-  return false;
-}*/
-/*boolean gate2down(){
-  int down1 = digitalRead(buttonPin7);
-  int down2 = digitalRead(buttonPin8);
-  if (down1 || down2)
-    return true;
-  return false;
-}*/
