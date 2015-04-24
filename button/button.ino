@@ -16,7 +16,9 @@ const int westgate1 = 0;    // button 5
 const int westgate2 = 1;    // button 6
 
 const int emstop = 4;    // Really necessary?  Just user power.
-const int maxcom = 5;
+const int maxcom = 5;    // Reads autonomous or teleop from other field control
+
+boolean autonspin = false;
 
 //Bytes and Shit
 byte addrB1 = 0x0B;    // first grizzly address - Spinner 
@@ -24,7 +26,9 @@ byte addrB2 = 0x0E;    // second grizzly address - Gate1
 byte addrB3 = 0x0F;    // third grizzly address - Gate2
 
 
-byte currLimitSpinner[3] = {0b00010011, 54, 0};
+byte currLimitSpinner[2] = {0b00010011, 512};
+byte currLimitSpinner2[2] = {0b00010011, 0};
+byte currLimitSpinner3[2] = {0b00010011, 512};
 byte startB[8] = {0b00010011,0x0,0x0,0x0,0x0,100,0x0,0x0};
 byte startBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,30,0x0,0x0};
 byte startBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,75,0x0,0x0};
@@ -65,6 +69,20 @@ void setup() {
   Wire.beginTransmission(addrB1);
   Wire.write(0x80);
   Wire.write(setToutB,2);
+  Wire.endTransmission();
+  
+  // Current limiting
+  Wire.beginTransmission(addrB1);
+  Wire.write(0x8A);
+  Wire.write(currLimitSpinner,2);
+  Wire.endTransmission();
+  Wire.beginTransmission(addrB1);
+  Wire.write(0x84);
+  Wire.write(currLimitSpinner2,2);
+  Wire.endTransmission();
+  Wire.beginTransmission(addrB1);
+  Wire.write(0x86);
+  Wire.write(currLimitSpinner3,2);
   Wire.endTransmission();
   
   Wire.beginTransmission(addrB2);
@@ -215,11 +233,20 @@ void loop() {
       spinnertimer = time+5000;
     }
   }
-  if (digitalRead(maxcom) == LOW) {
+  if (digitalRead(maxcom) == LOW && !autonspin) {
     Wire.beginTransmission(addrB1);
     Wire.write(0x1);
     Wire.write(stopB,8);
     Wire.endTransmission();
+    
+    if(digitalRead(turntable1) == LOW)
+      autonspin = true;
+    else if (digitalRead(turntable2) == LOW) {
+      byte temp[8] = startBSlow;
+      startBSlow = reverseBSlow;
+      reverseBSlow = temp;
+      autonspin = true;
+    }
   }
   else if(dir) {
     //Serial.println("Forward");
