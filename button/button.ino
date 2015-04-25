@@ -21,20 +21,20 @@ const int maxcom = 5;    // Reads autonomous or teleop from other field control
 boolean autonspin = false;
 
 //Bytes and Shit
-byte addrB1 = 0x0B;    // first grizzly address - Spinner 
+byte addrB1 = 0x0F;    // first grizzly address - Spinner 
 byte addrB2 = 0x0E;    // second grizzly address - Gate1
-byte addrB3 = 0x0F;    // third grizzly address - Gate2
+byte addrB3 = 0x0B;    // third grizzly address - Gate2
 
 
 byte currLimitSpinner[2] = {0b00010011, 512};
 byte currLimitSpinner2[2] = {0b00010011, 0};
 byte currLimitSpinner3[2] = {0b00010011, 512};
-byte startB[8] = {0b00010011,0x0,0x0,0x0,0x0,100,0x0,0x0};
+byte startB[8] = {0b00010011,0x0,0x0,0x0,0x0,90,0x0,0x0};
 byte startBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,30,0x0,0x0};
 byte startBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,75,0x0,0x0};
 byte startBMediumSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,65,0x0,0x0};
 byte stopB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
-byte reverseB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x9C,0xFF,0x0};
+byte reverseB[8] = {0b00010011,0x0,0x0,0x0,0x0,0x70,0xFF,0x0};
 byte reverseBSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,0xE2,0xFF,0x0};
 byte reverseBMedium[8] = {0b00010011,0x0,0x0,0x0,0x0,0x8B,0xFF,0x0};
 byte reverseBMediumSlow[8] = {0b00010011,0x0,0x0,0x0,0x0,0x9B,0xFF,0x0};
@@ -168,7 +168,7 @@ void loop() {
   }
     
   time = millis();
-  // West Gate
+  // West Gate/Close gate
   if (digitalRead(eastgate1) == LOW || digitalRead(eastgate2) == LOW) {
       digitalWrite(ledPin, LOW);
       if (gate1timer < time) {
@@ -179,14 +179,14 @@ void loop() {
   if ((time < gate1timer-9000) && (gate1timer > 0) && (digitalRead(eastgatelimit) != LOW)) {
     Wire.beginTransmission(addrB2);
     Wire.write(0x1);
-    Wire.write(startBMediumSlow,8);
+    Wire.write(reverseBMedium,8);
     Wire.endTransmission();
   }
   // Going down
   else if ((time > gate1timer-1500) && (time < gate1timer)) {
     Wire.beginTransmission(addrB2);
     Wire.write(0x1);
-    Wire.write(reverseBMediumSlow,8);
+    Wire.write(startBMedium,8);
     Wire.endTransmission();
   }
   // Stopped
@@ -197,7 +197,7 @@ void loop() {
     Wire.endTransmission();
   }
 
-  // East Gate
+  // East Gate/Far gate
   if (digitalRead(westgate1) == LOW || digitalRead(westgate2) == LOW) {
       digitalWrite(ledPin, LOW);
       if (gate2timer < time) {
@@ -208,14 +208,14 @@ void loop() {
   if ((time < gate2timer-9000) && (gate2timer > 0) && (digitalRead(westgatelimit) != LOW)) {
     Wire.beginTransmission(addrB3);
     Wire.write(0x1);
-    Wire.write(startBMedium,8);
+    Wire.write(startB,8);
     Wire.endTransmission();
   }
   // Going down
   else if ((time > gate2timer-1500) && (time < gate2timer)) {
     Wire.beginTransmission(addrB3);
     Wire.write(0x1);
-    Wire.write(reverseBMedium,8);
+    Wire.write(reverseB,8);
     Wire.endTransmission();
   }
   // Stopped
@@ -239,12 +239,27 @@ void loop() {
     Wire.write(stopB,8);
     Wire.endTransmission();
     
-    if(digitalRead(turntable1) == LOW)
+    if(digitalRead(turntable1) == LOW) {
       autonspin = true;
+    }
     else if (digitalRead(turntable2) == LOW) {
-      byte temp[8] = startBSlow;
-      startBSlow = reverseBSlow;
-      reverseBSlow = temp;
+      startBSlow[0] = 0b00010011;
+      startBSlow[1] = 0x0;
+      startBSlow[2] = 0x0;
+      startBSlow[3] = 0x0;
+      startBSlow[4] = 0x0;
+      startBSlow[5] = 0xE2;
+      startBSlow[6] = 0xFF;
+      startBSlow[7] = 0x0;
+      
+      reverseBSlow[0] = 0b00010011;
+      reverseBSlow[1] = 0x0;
+      reverseBSlow[2] = 0x0;
+      reverseBSlow[3] = 0x0;
+      reverseBSlow[4] = 0x0;
+      reverseBSlow[5] = 30;
+      reverseBSlow[6] = 0x0;
+      reverseBSlow[7] = 0x0;
       autonspin = true;
     }
   }
